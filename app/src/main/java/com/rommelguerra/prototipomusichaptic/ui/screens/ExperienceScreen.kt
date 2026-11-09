@@ -14,8 +14,19 @@ import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -24,7 +35,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,6 +54,9 @@ import com.rommelguerra.prototipomusichaptic.integracion.*
 private val Ink = Color(0xFF18283A)
 private val Teal = Color(0xFF096B60)
 private val Mist = Color(0xFFF3F6F3)
+private val Sky = Color(0xFF5B6EF5)
+private val Coral = Color(0xFFFF6B6B)
+private val Honey = Color(0xFFFFB84D)
 
 /** Pantalla unificada de los módulos de música y sonidos cotidianos. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -138,33 +155,48 @@ fun ExperienceScreen(integracion: IntegracionViewModel = viewModel()) {
             delay(50)
         }
     }
-    MaterialTheme(colorScheme = lightColorScheme(primary = Teal, secondary = Teal, secondaryContainer = Color(0xFFE0EBE4), onSecondaryContainer = Teal, background = Mist, surface = Color.White, onSurface = Ink)) {
+        MaterialTheme(colorScheme = lightColorScheme(primary = Teal, secondary = Sky, tertiary = Coral, secondaryContainer = Color(0xFFE0EBE4), onSecondaryContainer = Teal, background = Mist, surface = Color.White, onSurface = Ink)) {
         Scaffold(containerColor = Mist, bottomBar = {
-            NavigationBar(containerColor = Color.White) {
+            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 listOf("Inicio", "Música", "Cotidiano").forEachIndexed { i, label ->
                     NavigationBarItem(selected = page == i, onClick = { page = i },
                         icon = { Icon(when(i) { 0 -> Icons.Default.Home; 1 -> Icons.Default.MusicNote; else -> Icons.Default.Notifications }, label) }, label = { Text(label) })
                 }
             }
         }) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(Modifier.weight(1f)) { Text("HapticMusic", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold); Text("Siente lo que te conecta", color = Teal, fontSize = 13.sp) }
-                    Surface(shape = RoundedCornerShape(30.dp), color = Color(0xFFE0EBE4)) { Text("PISP · 05", Modifier.padding(12.dp), color = Teal, fontWeight = FontWeight.Bold) }
+            Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFFF7FAFF), Mist, Color(0xFFFFF8F2)))).padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        modifier = Modifier.size(46.dp).clip(RoundedCornerShape(15.dp)).background(Brush.linearGradient(listOf(Teal, Sky))),
+                        contentAlignment = Alignment.Center
+                    ) { Icon(Icons.Default.GraphicEq, null, tint = Color.White, modifier = Modifier.size(27.dp)) }
+                    Column(Modifier.weight(1f)) { Text("HapticMusic", fontSize = 23.sp, fontWeight = FontWeight.ExtraBold, color = Ink); Text("Siente lo que te conecta", color = Teal, fontSize = 13.sp) }
+                    Surface(shape = RoundedCornerShape(30.dp), color = Color.White, shadowElevation = 3.dp) { Text("PISP · 05", Modifier.padding(horizontal = 12.dp, vertical = 9.dp), color = Teal, fontWeight = FontWeight.Bold, fontSize = 12.sp) }
                 }
+                // Cada pantalla ocupa el contenedor por separado. Evitamos superponer
+                // la vista anterior y la nueva durante el cambio de sección.
                 when(page) {
                     0 -> {
-                        Text("Tu mundo,\na tu ritmo.", fontSize = 40.sp, lineHeight = 44.sp, fontWeight = FontWeight.Bold)
-                        Text("Reproduce tu música y reconoce los sonidos disponibles en cada contexto.")
-                        ExperienceCard("01 / EXPLORA", "Música", "Abre tu audio, reproduce y descubre cada ritmo.", Icons.Default.Headphones, Teal) { page = 1 }
-                        ExperienceCard("02 / CONECTA", "Vida cotidiana", "Hogar, urbano, social e industrial: señales según tu contexto.", Icons.Default.Notifications, Color(0xFF985327)) { page = 2 }
+                        Surface(shape = RoundedCornerShape(30.dp), color = Color.Transparent, modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.background(Brush.linearGradient(listOf(Ink, Teal)), RoundedCornerShape(30.dp)).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Text("TU EXPERIENCIA HÁPTICA", color = Color(0xFFB9F5D9), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
+                                Text("Tu mundo,\na tu ritmo.", color = Color.White, fontSize = 36.sp, lineHeight = 40.sp, fontWeight = FontWeight.Bold)
+                                Text("Explora música y sonidos cotidianos a través de señales que puedes sentir.", color = Color.White.copy(alpha = .84f), fontSize = 15.sp)
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    StatusPill("MÚSICA", Color(0xFFACDEB7))
+                                    StatusPill("COTIDIANO", Color(0xFFFFD39A))
+                                }
+                            }
+                        }
+                        ExperienceCard("01 / EXPLORA", "Música", "Abre tu audio, reproduce y descubre cada ritmo.", Icons.Default.Headphones, Teal, Sky) { page = 1 }
+                        ExperienceCard("02 / CONECTA", "Vida cotidiana", "Hogar, urbano, social e industrial: señales según tu contexto.", Icons.Default.Notifications, Color(0xFF985327), Coral) { page = 2 }
                         ResumenHaptica(conectadoBle, ocupadoBle) { page = 3 }
-                        Text("Diseñado para explorar sin depender solo del sonido.", color = Teal)
+                        Text("Diseñado para explorar sin depender solo del sonido.", color = Teal, fontWeight = FontWeight.SemiBold)
                     }
                     1 -> {
                         Text("Siente la música", fontSize = 32.sp, fontWeight = FontWeight.Bold)
                         Text("Tu biblioteca, tu momento. Elige un archivo del teléfono.")
-                        Surface(shape = RoundedCornerShape(28.dp), color = Ink) {
+                            Surface(shape = RoundedCornerShape(28.dp), color = Ink, shadowElevation = 8.dp) {
                             Column(Modifier.fillMaxWidth().padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
                                 Icon(Icons.Default.GraphicEq, null, tint = Color(0xFFACDEB7), modifier = Modifier.size(96.dp))
                                 Text(title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -228,14 +260,27 @@ private fun clock(ms: Int): String = "%d:%02d".format(ms / 60000, ms / 1000 % 60
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ExperienceCard(eyebrow: String, title: String, description: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, onClick: () -> Unit) {
-    Card(onClick = onClick, shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = color), modifier = Modifier.fillMaxWidth()) {
+private fun ExperienceCard(eyebrow: String, title: String, description: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: Color, accent: Color, onClick: () -> Unit) {
+    Card(onClick = onClick, shape = RoundedCornerShape(26.dp), colors = CardDefaults.cardColors(containerColor = color), elevation = CardDefaults.cardElevation(defaultElevation = 5.dp), modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(eyebrow, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp); Icon(icon, null, tint = Color.White) }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(eyebrow, color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
+                Box(Modifier.size(44.dp).clip(CircleShape).background(accent.copy(alpha = .9f)), contentAlignment = Alignment.Center) { Icon(icon, null, tint = Color.White, modifier = Modifier.size(24.dp)) }
+            }
             Text(title, color = Color.White, fontSize = 30.sp, fontWeight = FontWeight.Bold)
             Text(description, color = Color.White)
-            Icon(Icons.Default.ArrowForward, "Abrir $title", tint = Color.White)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text("Abrir experiencia", color = Color.White.copy(alpha = .84f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Default.ArrowForward, "Abrir $title", tint = Color.White)
+            }
         }
+    }
+}
+
+@Composable
+private fun StatusPill(label: String, color: Color) {
+    Surface(shape = RoundedCornerShape(30.dp), color = color.copy(alpha = .18f), border = androidx.compose.foundation.BorderStroke(1.dp, color.copy(alpha = .55f))) {
+        Text(label, color = color, modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold)
     }
 }
 
